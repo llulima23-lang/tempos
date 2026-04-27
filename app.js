@@ -53,16 +53,26 @@ let chartSaldo = null, chartEvolucao = null, chartOperador = null, chartPausas =
 
 // Default feriados if none exist
 const DEFAULT_FERIADOS = [
-  { data: '2026-03-25', desc: 'Quarta-feira de Cinzas (Ponto Facultativo)', tipo: 'nacional' },
-  { data: '2026-04-03', desc: 'Sexta-feira Santa', tipo: 'nacional' },
+  { data: '2026-01-01', desc: 'Confraternização Universal', tipo: 'nacional' },
+  { data: '2026-02-16', desc: 'Carnaval', tipo: 'nacional' },
+  { data: '2026-02-17', desc: 'Carnaval', tipo: 'nacional' },
+  { data: '2026-02-18', desc: 'Quarta-feira de Cinzas', tipo: 'nacional' },
+  { data: '2026-03-19', desc: 'São José (Feriado Local)', tipo: 'local' },
+  { data: '2026-03-25', desc: 'Data Magna do Ceará (Feriado Estadual)', tipo: 'local' },
+  { data: '2026-04-03', desc: 'Paixão de Cristo', tipo: 'nacional' },
   { data: '2026-04-21', desc: 'Tiradentes', tipo: 'nacional' },
-  { data: '2026-05-01', desc: 'Dia do Trabalhador', tipo: 'nacional' },
+  { data: '2026-05-01', desc: 'Dia do Trabalho', tipo: 'nacional' },
+  { data: '2026-06-04', desc: 'Corpus Christi', tipo: 'nacional' },
+  { data: '2026-09-07', desc: 'Independência do Brasil', tipo: 'nacional' },
+  { data: '2026-10-12', desc: 'Nossa Senhora Aparecida', tipo: 'nacional' },
+  { data: '2026-11-02', desc: 'Finados', tipo: 'nacional' },
+  { data: '2026-11-20', desc: 'Dia da Consciência Negra', tipo: 'nacional' },
+  { data: '2026-12-25', desc: 'Natal', tipo: 'nacional' }
 ];
 
-if (FERIADOS.length === 0) {
-  FERIADOS = DEFAULT_FERIADOS;
-  localStorage.setItem('bh_feriados', JSON.stringify(FERIADOS));
-}
+// Force reset to include the full year list
+FERIADOS = [...DEFAULT_FERIADOS];
+localStorage.setItem('bh_feriados', JSON.stringify(FERIADOS));
 
 const COMPENSACAO_FERIADO = 4320; // 01:12 em segundos
 
@@ -84,10 +94,16 @@ async function loadData() {
 
 // ===== COMPUTED DATA =====
 function applyGlobalFilters(records, mes, dataIni, dataFim) {
+  const dtIni = dataIni || '2026-03-16';
+  const d = new Date();
+  d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+  const todayStr = d.toISOString().split('T')[0];
+  const dtFim = dataFim || (mes ? '2099-12-31' : todayStr);
+
   return records.filter(r => {
     if (mes && !r.data.startsWith(mes)) return false;
-    if (dataIni && r.data < dataIni) return false;
-    if (dataFim && r.data > dataFim) return false;
+    if (r.data < dtIni) return false;
+    if (r.data > dtFim) return false;
     return true;
   });
 }
@@ -129,12 +145,18 @@ function getOperatorSummary(op, mes, dataIni, dataFim) {
     credito += r.credito || 0;
     deficit += r.deficit || 0;
   });
+  const dtIni = dataIni || '2026-03-16';
+  const d = new Date();
+  d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+  const todayStr = d.toISOString().split('T')[0];
+  const dtFim = dataFim || (mes ? '2099-12-31' : todayStr);
+
   // Add falta as BH deficit
   const faltasBH = FALTAS.filter(f => {
     if (normalizeName(f.operador) !== op.nome || f.tipo !== 'banco_horas') return false;
     if (mes && !f.data.startsWith(mes)) return false;
-    if (dataIni && f.data < dataIni) return false;
-    if (dataFim && f.data > dataFim) return false;
+    if (f.data < dtIni) return false;
+    if (f.data > dtFim) return false;
     return true;
   });
   faltasBH.forEach(f => { deficit += f.carga; });
@@ -142,8 +164,8 @@ function getOperatorSummary(op, mes, dataIni, dataFim) {
   // Feriados: sempre incluir deficit de 01:12:00 por cada feriado cadastrado no sistema
   const feriadosFilt = FERIADOS.filter(f => {
     if (mes && !f.data.startsWith(mes)) return false;
-    if (dataIni && f.data < dataIni) return false;
-    if (dataFim && f.data > dataFim) return false;
+    if (f.data < dtIni) return false;
+    if (f.data > dtFim) return false;
     if (op.admissao && op.admissao >= f.data) return false;
     return true;
   });
@@ -162,6 +184,28 @@ function getGroups() {
 // ===== INIT =====
 function initApp() {
   document.getElementById('topbar-date').textContent = new Date().toLocaleDateString('pt-BR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+  
+  // Check for persistent session
+  const savedUser = sessionStorage.getItem('bh_user');
+  if (savedUser) {
+    CURRENT_USER = JSON.parse(savedUser);
+    document.getElementById('login-overlay').classList.add('hidden');
+    // Restore UI state based on role
+    if (CURRENT_USER.role === 'admin') {
+      document.getElementById('sidebar').style.display = 'flex';
+      document.getElementById('search-box').style.display = 'flex';
+      document.getElementById('menu-toggle').style.display = 'block';
+      if (window.innerWidth > 768) document.getElementById('main-content').style.marginLeft = 'var(--sidebar-w)';
+      document.querySelectorAll('.admin-only-show').forEach(el => el.style.display = '');
+    } else {
+      document.getElementById('sidebar').style.display = 'none';
+      document.getElementById('search-box').style.display = 'none';
+      document.getElementById('menu-toggle').style.display = 'none';
+      document.getElementById('main-content').style.marginLeft = '0';
+      document.querySelectorAll('.admin-only-show').forEach(el => el.style.display = 'none');
+    }
+  }
+
   populateFilters();
   renderDashboard();
   renderFeriados();
@@ -798,9 +842,11 @@ function navigateTo(page) {
   if (page === 'faltas') renderFaltas();
   if (page === 'pausas') renderPausas();
   if (page === 'operadores') {
+    const ctrl = document.getElementById('admin-op-controls');
+    if (ctrl) ctrl.style.display = 'block';
+    
     if (CURRENT_USER && CURRENT_USER.role === 'operator') {
-      const ctrl = document.getElementById('admin-op-controls');
-      if (ctrl) ctrl.style.display = 'none';
+      document.querySelectorAll('.admin-only-show').forEach(el => el.style.display = 'none');
       const searchInput = document.getElementById('search-op-list');
       if (searchInput) searchInput.value = CURRENT_USER.op.matricula;
       currentOpViewMode = 'cards';
@@ -808,8 +854,7 @@ function navigateTo(page) {
       if (back) back.style.display = 'none';
       renderOperadoresView();
     } else {
-      const ctrl = document.getElementById('admin-op-controls');
-      if (ctrl) ctrl.style.display = 'block';
+      document.querySelectorAll('.admin-only-show').forEach(el => el.style.display = '');
       const searchInput = document.getElementById('search-op-list');
       if (searchInput) searchInput.value = '';
       const back = document.getElementById('btn-back-operadores');
@@ -943,6 +988,7 @@ function attemptLogin() {
     }
     
     navigateTo('dashboard');
+    sessionStorage.setItem('bh_user', JSON.stringify(CURRENT_USER));
     toast('Bem-vindo(a), Supervisão!');
     return;
   }
@@ -959,6 +1005,7 @@ function attemptLogin() {
     document.getElementById('main-content').style.marginLeft = '0';
     
     navigateTo('operadores');
+    sessionStorage.setItem('bh_user', JSON.stringify(CURRENT_USER));
     toast(`Bem-vindo(a), ${operator.nome}!`);
   } else {
     toast('Matrícula/Senha incorreta', 'error');
@@ -969,10 +1016,17 @@ document.getElementById('login-input')?.addEventListener('keypress', e => { if(e
 
 function logout() {
   CURRENT_USER = null;
+  sessionStorage.removeItem('bh_user');
   document.getElementById('login-overlay').classList.remove('hidden');
   document.getElementById('login-input').value = '';
+  window.location.reload();
 }
 document.getElementById('btn-logout')?.addEventListener('click', logout);
+
+document.getElementById('btn-refresh')?.addEventListener('click', () => {
+  toast('Atualizando dados...');
+  window.location.reload();
+});
 
 // ===== START =====
 document.addEventListener('DOMContentLoaded', loadData);

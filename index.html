@@ -89,7 +89,10 @@
           <span class="material-icons-round">search</span>
           <input type="text" placeholder="Buscar operador..." id="search-input">
         </div>
-        <button class="btn btn-secondary btn-sm" id="btn-logout" title="Sair do Sistema" style="margin-left: 16px;">
+        <button class="btn btn-secondary btn-sm admin-only-show" id="btn-refresh" title="Atualizar Dados" style="margin-left: 16px;">
+          <span class="material-icons-round">refresh</span> Atualizar
+        </button>
+        <button class="btn btn-secondary btn-sm" id="btn-logout" title="Sair do Sistema" style="margin-left: 10px;">
           <span class="material-icons-round">logout</span> Sair
         </button>
       </div>
@@ -211,7 +214,7 @@
       <div class="page-controls" id="admin-op-controls">
         <div class="filter-row" style="justify-content: space-between; width: 100%;">
           <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end;">
-            <div class="filter-group">
+            <div class="filter-group admin-only-show">
               <label>Mês</label>
               <select id="filter-mes-op" class="filter-select"><option value="">Todos</option></select>
             </div>
@@ -223,16 +226,16 @@
               <label>Data Fim</label>
               <input type="date" id="filter-data-fim-op" class="filter-input">
             </div>
-            <div class="filter-group">
+            <div class="filter-group admin-only-show">
               <label>Grupo</label>
               <select id="filter-grupo-op" class="filter-select"><option value="">Todos</option></select>
             </div>
-            <div class="filter-group">
+            <div class="filter-group admin-only-show">
               <label>Busca</label>
               <input type="text" id="search-op-list" class="filter-input" placeholder="Nome ou matrícula...">
             </div>
           </div>
-          <div class="view-toggle">
+          <div class="view-toggle admin-only-show">
             <button class="active" id="btn-view-cards" title="Ver como Cards"><span class="material-icons-round">grid_view</span></button>
             <button id="btn-view-list" title="Ver como Lista"><span class="material-icons-round">view_list</span></button>
           </div>
