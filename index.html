@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Sistema de Controle de Tempos Operacionais - Meireles & Freitas">
+  <title>Tempos Operacionais | MF Controle</title>
+  <link rel="icon" href="logo.png" type="image/png">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- Login Overlay -->
+  <div class="login-overlay" id="login-overlay">
+    <div class="login-card">
+      <div class="login-header">
+        <img src="logo.png" alt="Logo" class="login-logo">
+        <h2>Tempos Operacionais</h2>
+        <p>Acesso Restrito</p>
+      </div>
+      <div class="form-group" style="margin-top: 10px;">
+        <label>Matrícula / Senha</label>
+        <input type="password" id="login-input" class="filter-input" placeholder="Digite sua matrícula ou senha admin">
+      </div>
+      <button class="btn btn-primary" id="btn-login" style="width: 100%; justify-content: center; margin-top: 10px; padding: 12px;">Entrar</button>
+    </div>
+  </div>
+
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <img src="logo.png" alt="Logo" class="sidebar-logo">
+      <div class="sidebar-brand">
+        <h1>TEMPOS OPERACIONAIS</h1>
+        <span>Tempos Operacionais</span>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="#" class="nav-item active" data-page="dashboard" id="nav-dashboard">
+        <span class="material-icons-round">dashboard</span>
+        <span>Dashboard</span>
+      </a>
+      <a href="#" class="nav-item" data-page="operadores" id="nav-operadores">
+        <span class="material-icons-round">group</span>
+        <span>Operadores</span>
+      </a>
+      <a href="#" class="nav-item" data-page="detalhes" id="nav-detalhes">
+        <span class="material-icons-round">table_chart</span>
+        <span>Detalhes Diários</span>
+      </a>
+      <a href="#" class="nav-item" data-page="pausas" id="nav-pausas">
+        <span class="material-icons-round">timer</span>
+        <span>Análise de Pausas</span>
+      </a>
+      <a href="#" class="nav-item" data-page="feriados" id="nav-feriados">
+        <span class="material-icons-round">event</span>
+        <span>Feriados</span>
+      </a>
+      <a href="#" class="nav-item" data-page="faltas" id="nav-faltas">
+        <span class="material-icons-round">person_off</span>
+        <span>Faltas / Atestados</span>
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sidebar-user">
+        <span class="material-icons-round">account_circle</span>
+        <div>
+          <strong>Supervisão</strong>
+          <small>Luciana</small>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-content" id="main-content">
+    <!-- Top Bar -->
+    <header class="topbar">
+      <button class="menu-toggle" id="menu-toggle">
+        <span class="material-icons-round">menu</span>
+      </button>
+      <div class="topbar-title">
+        <h2 id="page-title">Dashboard</h2>
+        <span class="topbar-date" id="topbar-date"></span>
+      </div>
+      <div class="topbar-actions" id="topbar-actions" style="display: flex; align-items: center;">
+        <div class="search-box" id="search-box">
+          <span class="material-icons-round">search</span>
+          <input type="text" placeholder="Buscar operador..." id="search-input">
+        </div>
+        <button class="btn btn-secondary btn-sm" id="btn-logout" title="Sair do Sistema" style="margin-left: 16px;">
+          <span class="material-icons-round">logout</span> Sair
+        </button>
+      </div>
+    </header>
+
+    <!-- Dashboard Page -->
+    <section class="page active" id="page-dashboard">
+      <div class="page-controls">
+        <div class="filter-row">
+          <div class="filter-group">
+            <label>Mês</label>
+            <select id="filter-mes-dash" class="filter-select"><option value="">Todos</option></select>
+          </div>
+          <div class="filter-group">
+            <label>Data Início</label>
+            <input type="date" id="filter-data-ini-dash" class="filter-input">
+          </div>
+          <div class="filter-group">
+            <label>Data Fim</label>
+            <input type="date" id="filter-data-fim-dash" class="filter-input">
+          </div>
+          <div class="filter-group">
+            <label>Grupo</label>
+            <select id="filter-grupo-dashboard" class="filter-select"><option value="">Todos</option></select>
+          </div>
+        </div>
+      </div>
+      
+      <!-- KPI Cards -->
+      <div class="kpi-grid">
+        <div class="kpi-card kpi-credito" id="kpi-credito-total">
+          <div class="kpi-icon">
+            <span class="material-icons-round">trending_up</span>
+          </div>
+          <div class="kpi-info">
+            <span class="kpi-label">Crédito Total</span>
+            <span class="kpi-value" id="kpi-credito-val">--:--:--</span>
+          </div>
+        </div>
+        <div class="kpi-card kpi-deficit" id="kpi-deficit-total">
+          <div class="kpi-icon">
+            <span class="material-icons-round">trending_down</span>
+          </div>
+          <div class="kpi-info">
+            <span class="kpi-label">Déficit Total</span>
+            <span class="kpi-value" id="kpi-deficit-val">--:--:--</span>
+          </div>
+        </div>
+        <div class="kpi-card kpi-saldo" id="kpi-saldo-total">
+          <div class="kpi-icon">
+            <span class="material-icons-round">account_balance</span>
+          </div>
+          <div class="kpi-info">
+            <span class="kpi-label">Saldo Banco de Horas</span>
+            <span class="kpi-value" id="kpi-saldo-val">--:--:--</span>
+          </div>
+        </div>
+        <div class="kpi-card kpi-operadores" id="kpi-operadores-total">
+          <div class="kpi-icon">
+            <span class="material-icons-round">groups</span>
+          </div>
+          <div class="kpi-info">
+            <span class="kpi-label">Operadores Ativos</span>
+            <span class="kpi-value" id="kpi-operadores-val">--</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Charts Row -->
+      <div class="charts-row">
+        <div class="chart-card" id="chart-saldo-operador">
+          <div class="chart-header">
+            <h3>Saldo por Operador</h3>
+            <span class="chart-badge">Crédito - Déficit</span>
+          </div>
+          <div class="chart-body">
+            <canvas id="canvas-saldo-operador"></canvas>
+          </div>
+        </div>
+        <div class="chart-card" id="chart-evolucao">
+          <div class="chart-header">
+            <h3>Evolução Diária</h3>
+            <span class="chart-badge">Crédito vs Déficit</span>
+          </div>
+          <div class="chart-body">
+            <canvas id="canvas-evolucao"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Ranking Table -->
+      <div class="table-card" id="ranking-card">
+        <div class="table-header">
+          <h3><span class="material-icons-round">leaderboard</span> Ranking de Operadores</h3>
+        </div>
+        <div class="table-responsive">
+          <table class="data-table" id="ranking-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Operador</th>
+                <th>Grupo</th>
+                <th>Matrícula</th>
+                <th>Crédito</th>
+                <th>Déficit</th>
+                <th>BH Feriados</th>
+                <th>Saldo</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="ranking-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Operadores Page -->
+    <section class="page" id="page-operadores">
+      <div class="page-controls" id="admin-op-controls">
+        <div class="filter-row" style="justify-content: space-between; width: 100%;">
+          <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end;">
+            <div class="filter-group">
+              <label>Mês</label>
+              <select id="filter-mes-op" class="filter-select"><option value="">Todos</option></select>
+            </div>
+            <div class="filter-group">
+              <label>Data Início</label>
+              <input type="date" id="filter-data-ini-op" class="filter-input">
+            </div>
+            <div class="filter-group">
+              <label>Data Fim</label>
+              <input type="date" id="filter-data-fim-op" class="filter-input">
+            </div>
+            <div class="filter-group">
+              <label>Grupo</label>
+              <select id="filter-grupo-op" class="filter-select"><option value="">Todos</option></select>
+            </div>
+            <div class="filter-group">
+              <label>Busca</label>
+              <input type="text" id="search-op-list" class="filter-input" placeholder="Nome ou matrícula...">
+            </div>
+          </div>
+          <div class="view-toggle">
+            <button class="active" id="btn-view-cards" title="Ver como Cards"><span class="material-icons-round">grid_view</span></button>
+            <button id="btn-view-list" title="Ver como Lista"><span class="material-icons-round">view_list</span></button>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Operators Grid View -->
+      <div id="operadores-grid-container" class="operadores-grid"></div>
+
+      <!-- Operators List View -->
+      <div id="operadores-list-container" class="table-card" style="display: none;">
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Operador</th>
+                <th>Grupo</th>
+                <th>Matrícula</th>
+                <th>Crédito</th>
+                <th>Déficit</th>
+                <th>Saldo BH</th>
+              </tr>
+            </thead>
+            <tbody id="operadores-list-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="operador-detail" class="operador-detail" style="display:none;">
+        <div style="margin-bottom: 16px;">
+          <button class="btn btn-secondary btn-sm" id="btn-back-operadores" style="display:none;"><span class="material-icons-round">arrow_back</span> Voltar para Lista</button>
+        </div>
+        <div class="operador-header-card">
+          <div class="operador-avatar">
+            <span class="material-icons-round">person</span>
+          </div>
+          <div class="operador-meta">
+            <h2 id="operador-nome"></h2>
+            <div class="operador-tags">
+              <span class="tag tag-grupo" id="operador-grupo"></span>
+              <span class="tag tag-mat" id="operador-matricula"></span>
+              <span class="tag tag-op" id="operador-operacao"></span>
+            </div>
+          </div>
+          <div class="operador-saldo-card">
+            <span class="saldo-label">Saldo Atual</span>
+            <span class="saldo-value" id="operador-saldo">--:--:--</span>
+          </div>
+        </div>
+        <div class="kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+          <div class="kpi-card kpi-credito mini">
+            <div class="kpi-info">
+              <span class="kpi-label">Crédito Total</span>
+              <span class="kpi-value" id="op-credito">--:--:--</span>
+            </div>
+          </div>
+          <div class="kpi-card kpi-deficit mini">
+            <div class="kpi-info">
+              <span class="kpi-label">Déficit Total</span>
+              <span class="kpi-value" id="op-deficit">--:--:--</span>
+            </div>
+          </div>
+          <div class="kpi-card kpi-saldo mini">
+            <div class="kpi-info">
+              <span class="kpi-label">BH Feriados</span>
+              <span class="kpi-value" id="op-bh-feriados">--:--:--</span>
+            </div>
+          </div>
+          <div class="kpi-card mini" style="border-left-color: var(--accent);">
+            <div class="kpi-info">
+              <span class="kpi-label">% Pausas</span>
+              <span class="kpi-value" id="op-pct-pausa">--</span>
+            </div>
+          </div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-header">
+            <h3>Histórico Diário</h3>
+          </div>
+          <div class="chart-body">
+            <canvas id="canvas-operador-hist"></canvas>
+          </div>
+        </div>
+        <div class="table-card">
+          <div class="table-header">
+            <h3><span class="material-icons-round">calendar_month</span> Registros Diários</h3>
+          </div>
+          <div class="table-responsive">
+            <table class="data-table" id="operador-table">
+              <thead>
+                <tr>
+                  <th>Data</th>
+                  <th>1º Login</th>
+                  <th>Último Logout</th>
+                  <th>Tempo Logado</th>
+                  <th>Meta</th>
+                  <th>Crédito</th>
+                  <th>Déficit</th>
+                  <th>Pausas</th>
+                </tr>
+              </thead>
+              <tbody id="operador-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Detalhes Diários Page -->
+    <section class="page" id="page-detalhes">
+      <div class="page-controls">
+        <div class="filter-row">
+          <div class="filter-group">
+            <label>Mês</label>
+            <select id="filter-mes-detalhes" class="filter-select"><option value="">Todos</option></select>
+          </div>
+          <div class="filter-group">
+            <label>Data Início</label>
+            <input type="date" id="filter-data-ini-detalhes" class="filter-input">
+          </div>
+          <div class="filter-group">
+            <label>Data Fim</label>
+            <input type="date" id="filter-data-fim-detalhes" class="filter-input">
+          </div>
+          <div class="filter-group">
+            <label>Grupo</label>
+            <select id="filter-grupo-detalhes" class="filter-select">
+              <option value="">Todos</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label>Operador</label>
+            <select id="filter-operador-detalhes" class="filter-select">
+              <option value="">Todos</option>
+            </select>
+          </div>
+          <button class="btn btn-primary" id="btn-filtrar-detalhes">
+            <span class="material-icons-round">filter_alt</span>
+            Filtrar
+          </button>
+        </div>
+      </div>
+      <div class="table-card">
+        <div class="table-header">
+          <h3><span class="material-icons-round">view_list</span> Registros Detalhados</h3>
+          <span class="record-count" id="detalhes-count">0 registros</span>
+        </div>
+        <div class="table-responsive">
+          <table class="data-table" id="detalhes-table">
+            <thead>
+              <tr>
+                <th>Data</th>
+                <th>Operador</th>
+                <th>Grupo</th>
+                <th>1º Login</th>
+                <th>Último Logout</th>
+                <th>Tempo Logado</th>
+                <th>Meta</th>
+                <th>Crédito</th>
+                <th>Déficit</th>
+                <th>Pausas</th>
+              </tr>
+            </thead>
+            <tbody id="detalhes-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Feriados Page -->
+    <section class="page" id="page-feriados">
+      <div class="page-intro">
+        <div class="info-banner">
+          <span class="material-icons-round">info</span>
+          <p>Nos dias de feriado (nacional ou local), cada operador precisa compensar <strong>01:12 (4.320 segundos)</strong> a mais para concluir a carga horária do dia de feriado.</p>
+        </div>
+      </div>
+      <div class="feriado-form-card">
+        <h3><span class="material-icons-round">add_circle</span> Cadastrar Feriado</h3>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Data do Feriado</label>
+            <input type="date" id="feriado-data" class="filter-input">
+          </div>
+          <div class="form-group">
+            <label>Descrição</label>
+            <input type="text" id="feriado-desc" class="filter-input" placeholder="Ex: Sexta-feira Santa">
+          </div>
+          <div class="form-group">
+            <label>Tipo</label>
+            <select id="feriado-tipo" class="filter-select">
+              <option value="nacional">Nacional</option>
+              <option value="local">Local (Fortaleza)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Compensação por Operador</label>
+            <input type="text" id="feriado-compensacao" class="filter-input" value="01:12:00" readonly>
+          </div>
+          <button class="btn btn-primary" id="btn-add-feriado">
+            <span class="material-icons-round">add</span>
+            Adicionar
+          </button>
+        </div>
+      </div>
+      <div class="table-card">
+        <div class="table-header">
+          <h3><span class="material-icons-round">calendar_today</span> Feriados Cadastrados</h3>
+        </div>
+        <div class="table-responsive">
+          <table class="data-table" id="feriados-table">
+            <thead>
+              <tr>
+                <th>Data</th>
+                <th>Dia da Semana</th>
+                <th>Descrição</th>
+                <th>Tipo</th>
+                <th>Compensação</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="feriados-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Faltas / Atestados Page -->
+    <section class="page" id="page-faltas">
+      <div class="page-intro">
+        <div class="info-banner info-warning">
+          <span class="material-icons-round">warning</span>
+          <p>Registre aqui as faltas dos operadores. Selecione se a falta será <strong>Banco de Horas (a compensar)</strong> ou <strong>Atestado (justificada)</strong>. Faltas como "Banco de Horas" serão adicionadas ao déficit do operador.</p>
+        </div>
+      </div>
+      <div class="feriado-form-card">
+        <h3><span class="material-icons-round">person_add_disabled</span> Registrar Falta</h3>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Operador</label>
+            <select id="falta-operador" class="filter-select">
+              <option value="">Selecione...</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Data da Falta</label>
+            <input type="date" id="falta-data" class="filter-input">
+          </div>
+          <div class="form-group">
+            <label>Tipo de Falta</label>
+            <select id="falta-tipo" class="filter-select">
+              <option value="banco_horas">Banco de Horas (a compensar)</option>
+              <option value="atestado">Atestado Médico</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Carga Horária do Dia</label>
+            <select id="falta-carga" class="filter-select">
+              <option value="25920">07:12 (Carga Integral)</option>
+              <option value="21600">06:00 (Carga 6h)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Observação</label>
+            <input type="text" id="falta-obs" class="filter-input" placeholder="Observação opcional...">
+          </div>
+          <button class="btn btn-primary" id="btn-add-falta">
+            <span class="material-icons-round">add</span>
+            Registrar
+          </button>
+        </div>
+      </div>
+      <div class="table-card">
+        <div class="table-header">
+          <h3><span class="material-icons-round">event_busy</span> Faltas Registradas</h3>
+          <div class="table-filters">
+            <select id="filter-tipo-falta" class="filter-select">
+              <option value="">Todos os Tipos</option>
+              <option value="banco_horas">Banco de Horas</option>
+              <option value="atestado">Atestado</option>
+            </select>
+          </div>
+        </div>
+        <div class="table-responsive">
+          <table class="data-table" id="faltas-table">
+            <thead>
+              <tr>
+                <th>Operador</th>
+                <th>Data</th>
+                <th>Tipo</th>
+                <th>Carga Horária</th>
+                <th>Observação</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="faltas-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+    <!-- Análise de Pausas Page -->
+    <section class="page" id="page-pausas">
+      <div class="page-controls">
+        <div class="filter-row">
+          <div class="filter-group">
+            <label>Mês</label>
+            <select id="filter-mes-pausa" class="filter-select">
+              <option value="">Todos</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label>Data Início</label>
+            <input type="date" id="filter-data-ini-pausa" class="filter-input">
+          </div>
+          <div class="filter-group">
+            <label>Data Fim</label>
+            <input type="date" id="filter-data-fim-pausa" class="filter-input">
+          </div>
+          <div class="filter-group">
+            <label>Grupo</label>
+            <select id="filter-grupo-pausa" class="filter-select">
+              <option value="">Todos</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      
+      <!-- KPI Cards -->
+      <div class="kpi-grid kpi-grid-3">
+        <div class="kpi-card kpi-saldo">
+          <div class="kpi-icon"><span class="material-icons-round">percent</span></div>
+          <div class="kpi-info">
+            <span class="kpi-label">Pausa Média (Equipe)</span>
+            <span class="kpi-value" id="kpi-pausa-media">--%</span>
+          </div>
+        </div>
+        <div class="kpi-card kpi-credito">
+          <div class="kpi-icon"><span class="material-icons-round">check_circle</span></div>
+          <div class="kpi-info">
+            <span class="kpi-label">Dentro da Meta (&lt;15.5%)</span>
+            <span class="kpi-value" id="kpi-pausa-dentro">--</span>
+          </div>
+        </div>
+        <div class="kpi-card kpi-deficit">
+          <div class="kpi-icon"><span class="material-icons-round">warning</span></div>
+          <div class="kpi-info">
+            <span class="kpi-label">Acima da Meta</span>
+            <span class="kpi-value" id="kpi-pausa-acima">--</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="charts-row" style="grid-template-columns: 1fr;">
+        <div class="chart-card">
+          <div class="chart-header">
+            <h3>% Pausa vs Saldo BH por Operador</h3>
+            <span class="chart-badge">Meta 15.5%</span>
+          </div>
+          <div class="chart-body" style="height: 350px;">
+            <canvas id="canvas-pausas"></canvas>
+          </div>
+        </div>
+      </div>
+      
+      <div class="table-card">
+        <div class="table-header">
+          <h3><span class="material-icons-round">timer</span> Detalhamento de Pausas</h3>
+        </div>
+        <div class="table-responsive">
+          <table class="data-table" id="pausas-table">
+            <thead>
+              <tr>
+                <th>Operador</th>
+                <th>Média Tempo Logado/Dia</th>
+                <th>Média Pausa/Dia</th>
+                <th>% Pausa</th>
+                <th>Status (Meta 15.5%)</th>
+                <th>Saldo BH (Período)</th>
+              </tr>
+            </thead>
+            <tbody id="pausas-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Toast Notification -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- Modal -->
+  <div class="modal-overlay" id="modal-overlay">
+    <div class="modal" id="modal">
+      <div class="modal-header">
+        <h3 id="modal-title">Confirmar</h3>
+        <button class="modal-close" id="modal-close">
+          <span class="material-icons-round">close</span>
+        </button>
+      </div>
+      <div class="modal-body" id="modal-body"></div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="modal-cancel">Cancelar</button>
+        <button class="btn btn-danger" id="modal-confirm">Confirmar</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  <script src="data_embedded.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
