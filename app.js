@@ -44,6 +44,7 @@ function toast(msg, type = 'success') {
 }
 
 // ===== STATE =====
+const ADMIN_MATRICULA = '1926';
 let CURRENT_USER = null;
 let currentOpViewMode = 'cards';
 let DATA = { records: [], resumo: [] };
@@ -185,29 +186,17 @@ function getGroups() {
 function initApp() {
   document.getElementById('topbar-date').textContent = new Date().toLocaleDateString('pt-BR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
   
-  // Check for persistent session
-  const savedUser = sessionStorage.getItem('bh_user');
-  if (savedUser) {
-    CURRENT_USER = JSON.parse(savedUser);
-    document.getElementById('login-overlay').classList.add('hidden');
-    // Restore UI state based on role
-    if (CURRENT_USER.role === 'admin') {
-      document.getElementById('sidebar').style.display = 'flex';
-      document.getElementById('search-box').style.display = 'flex';
-      document.getElementById('menu-toggle').style.display = 'block';
-      if (window.innerWidth > 768) document.getElementById('main-content').style.marginLeft = 'var(--sidebar-w)';
-      document.querySelectorAll('.admin-only-show').forEach(el => el.style.display = '');
-    } else {
-      document.getElementById('sidebar').style.display = 'none';
-      document.getElementById('search-box').style.display = 'none';
-      document.getElementById('menu-toggle').style.display = 'none';
-      document.getElementById('main-content').style.marginLeft = '0';
-      document.querySelectorAll('.admin-only-show').forEach(el => el.style.display = 'none');
-    }
-  }
+  // ALWAYS clear session on page load/refresh - force login every time
+  sessionStorage.removeItem('bh_user');
+  CURRENT_USER = null;
+  document.getElementById('login-overlay').classList.remove('hidden');
+  document.getElementById('sidebar').style.display = 'none';
+  document.getElementById('search-box').style.display = 'none';
+  document.getElementById('menu-toggle').style.display = 'none';
+  document.getElementById('main-content').style.marginLeft = '0';
+  document.querySelectorAll('.admin-only-show').forEach(el => el.style.display = 'none');
 
   populateFilters();
-  renderDashboard();
   renderFeriados();
   renderFaltas();
   setupEvents();
@@ -829,15 +818,31 @@ function showModal(title, body, onConfirm) {
 }
 
 // ===== NAVIGATION =====
+const ADMIN_ONLY_PAGES = ['dashboard', 'detalhes', 'feriados', 'faltas', 'pausas'];
+
 function navigateTo(page) {
+  // HARD BLOCK: Only matricula 1926 can access admin pages
+  const isAdmin = CURRENT_USER && CURRENT_USER.role === 'admin' && CURRENT_USER.adminMatricula === ADMIN_MATRICULA;
+  
+  if (!isAdmin && ADMIN_ONLY_PAGES.includes(page)) {
+    page = 'operadores';
+  }
+  
+  // Double-check: operators are ALWAYS forced to 'operadores'
+  if (CURRENT_USER && CURRENT_USER.role === 'operator') {
+    page = 'operadores';
+  }
+  
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById(`page-${page}`).classList.add('active');
-  document.querySelector(`[data-page="${page}"]`).classList.add('active');
+  const navItem = document.querySelector(`[data-page="${page}"]`);
+  if (navItem) navItem.classList.add('active');
 
   const titles = { dashboard: 'Dashboard', operadores: 'Operadores', detalhes: 'Detalhes Diários', feriados: 'Feriados', faltas: 'Faltas / Atestados', pausas: 'Análise de Pausas' };
   document.getElementById('page-title').textContent = titles[page] || page;
 
+  if (page === 'dashboard') renderDashboard();
   if (page === 'detalhes') renderDetalhes();
   if (page === 'faltas') renderFaltas();
   if (page === 'pausas') renderPausas();
@@ -847,6 +852,10 @@ function navigateTo(page) {
     
     if (CURRENT_USER && CURRENT_USER.role === 'operator') {
       document.querySelectorAll('.admin-only-show').forEach(el => el.style.display = 'none');
+      document.getElementById('sidebar').style.display = 'none';
+      document.getElementById('search-box').style.display = 'none';
+      document.getElementById('menu-toggle').style.display = 'none';
+      document.getElementById('main-content').style.marginLeft = '0';
       const searchInput = document.getElementById('search-op-list');
       if (searchInput) searchInput.value = CURRENT_USER.op.matricula;
       currentOpViewMode = 'cards';
@@ -953,6 +962,22 @@ function setupEvents() {
 // ===== AUTO UPDATE =====
 let lastUpdateTime = null;
 
+function refreshCurrentView() {
+  // Re-render the current active page WITHOUT re-running initApp
+  // This preserves the user's login state and current screen
+  populateFilters();
+  renderFeriados();
+  renderFaltas();
+  const activePage = document.querySelector('.page.active');
+  if (activePage) {
+    const pageId = activePage.id.replace('page-', '');
+    if (pageId === 'dashboard') renderDashboard();
+    else if (pageId === 'detalhes') renderDetalhes();
+    else if (pageId === 'pausas') renderPausas();
+    else if (pageId === 'operadores') renderOperadoresView();
+  }
+}
+
 setInterval(async () => {
   try {
     const res = await fetch('data.json?t=' + new Date().getTime());
@@ -963,7 +988,7 @@ setInterval(async () => {
       } else if (newData.updated_at && newData.updated_at !== lastUpdateTime) {
         lastUpdateTime = newData.updated_at;
         DATA = newData;
-        initApp();
+        refreshCurrentView();
         toast('Dados atualizados com base na nova planilha!', 'info');
       }
     }
@@ -975,8 +1000,9 @@ function attemptLogin() {
   const val = document.getElementById('login-input').value.trim();
   if (!val) { toast('Digite a matrícula/senha', 'error'); return; }
 
-  if (val.toLowerCase() === 'admin' || val.toLowerCase() === 'luciana' || val === '1926') {
-    CURRENT_USER = { role: 'admin', op: null };
+  // ADMIN: ONLY matricula 1926 grants admin access
+  if (val === ADMIN_MATRICULA) {
+    CURRENT_USER = { role: 'admin', op: null, adminMatricula: ADMIN_MATRICULA };
     document.getElementById('login-overlay').classList.add('hidden');
     document.getElementById('sidebar').style.display = 'flex';
     document.getElementById('search-box').style.display = 'flex';
@@ -988,7 +1014,6 @@ function attemptLogin() {
     }
     
     navigateTo('dashboard');
-    sessionStorage.setItem('bh_user', JSON.stringify(CURRENT_USER));
     toast('Bem-vindo(a), Supervisão!');
     return;
   }
@@ -1005,7 +1030,6 @@ function attemptLogin() {
     document.getElementById('main-content').style.marginLeft = '0';
     
     navigateTo('operadores');
-    sessionStorage.setItem('bh_user', JSON.stringify(CURRENT_USER));
     toast(`Bem-vindo(a), ${operator.nome}!`);
   } else {
     toast('Matrícula/Senha incorreta', 'error');
@@ -1023,10 +1047,21 @@ function logout() {
 }
 document.getElementById('btn-logout')?.addEventListener('click', logout);
 
-document.getElementById('btn-refresh')?.addEventListener('click', () => {
+document.getElementById('btn-refresh')?.addEventListener('click', async () => {
   toast('Atualizando dados...');
-  window.location.reload();
+  try {
+    const res = await fetch('data.json?t=' + new Date().getTime());
+    if (res.ok) {
+      DATA = await res.json();
+      lastUpdateTime = DATA.updated_at || null;
+      refreshCurrentView();
+      toast('Dados atualizados!', 'success');
+    }
+  } catch(e) {
+    toast('Erro ao atualizar dados!', 'error');
+  }
 });
-
 // ===== START =====
-document.addEventListener('DOMContentLoaded', loadData);
+document.addEventListener('DOMContentLoaded', () => {
+  loadData();
+});

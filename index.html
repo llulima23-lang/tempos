@@ -28,7 +28,7 @@
   </div>
 
   <!-- Sidebar -->
-  <aside class="sidebar" id="sidebar">
+  <aside class="sidebar" id="sidebar" style="display:none;">
     <div class="sidebar-header">
       <img src="logo.png" alt="Logo" class="sidebar-logo">
       <div class="sidebar-brand">
@@ -37,7 +37,7 @@
       </div>
     </div>
     <nav class="sidebar-nav">
-      <a href="#" class="nav-item active" data-page="dashboard" id="nav-dashboard">
+      <a href="#" class="nav-item" data-page="dashboard" id="nav-dashboard">
         <span class="material-icons-round">dashboard</span>
         <span>Dashboard</span>
       </a>
@@ -74,10 +74,10 @@
   </aside>
 
   <!-- Main Content -->
-  <main class="main-content" id="main-content">
+  <main class="main-content" id="main-content" style="margin-left:0;">
     <!-- Top Bar -->
     <header class="topbar">
-      <button class="menu-toggle" id="menu-toggle">
+      <button class="menu-toggle" id="menu-toggle" style="display:none;">
         <span class="material-icons-round">menu</span>
       </button>
       <div class="topbar-title">
@@ -85,7 +85,7 @@
         <span class="topbar-date" id="topbar-date"></span>
       </div>
       <div class="topbar-actions" id="topbar-actions" style="display: flex; align-items: center;">
-        <div class="search-box" id="search-box">
+        <div class="search-box" id="search-box" style="display:none;">
           <span class="material-icons-round">search</span>
           <input type="text" placeholder="Buscar operador..." id="search-input">
         </div>
@@ -99,7 +99,7 @@
     </header>
 
     <!-- Dashboard Page -->
-    <section class="page active" id="page-dashboard">
+    <section class="page" id="page-dashboard">
       <div class="page-controls">
         <div class="filter-row">
           <div class="filter-group">
