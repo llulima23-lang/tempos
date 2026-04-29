@@ -44,13 +44,11 @@ def process_excel():
         shutil.copy2(SOURCE_EXCEL, LOCAL_EXCEL)
         wb = openpyxl.load_workbook(LOCAL_EXCEL, data_only=True)
         ws = wb['BASE']
-        target_date = datetime.datetime(2026, 3, 16)
         
         records = []
         for row_idx in range(2, ws.max_row + 1):
             date_val = ws.cell(row=row_idx, column=1).value
             if not isinstance(date_val, datetime.datetime): continue
-            if date_val < target_date: continue
             
             record = {
                 "data": date_val.strftime("%Y-%m-%d"),

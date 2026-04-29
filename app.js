@@ -54,6 +54,7 @@ let chartSaldo = null, chartEvolucao = null, chartOperador = null, chartPausas =
 
 // Default feriados if none exist
 const DEFAULT_FERIADOS = [
+  { data: '2025-12-25', desc: 'Natal', tipo: 'nacional' },
   { data: '2026-01-01', desc: 'Confraternização Universal', tipo: 'nacional' },
   { data: '2026-02-16', desc: 'Carnaval', tipo: 'nacional' },
   { data: '2026-02-17', desc: 'Carnaval', tipo: 'nacional' },
@@ -95,7 +96,7 @@ async function loadData() {
 
 // ===== COMPUTED DATA =====
 function applyGlobalFilters(records, mes, dataIni, dataFim) {
-  const dtIni = dataIni || '2026-03-16';
+  const dtIni = dataIni || '2000-01-01';
   const d = new Date();
   d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
   const todayStr = d.toISOString().split('T')[0];
@@ -142,11 +143,19 @@ function getOperators(mes, dataIni, dataFim) {
 
 function getOperatorSummary(op, mes, dataIni, dataFim) {
   let credito = 0, deficit = 0;
+  
+  const GLOBAL_START_DATE = '2026-03-16';
+  const effectiveStart = (op.admissao && op.admissao > GLOBAL_START_DATE) ? op.admissao : GLOBAL_START_DATE;
+
   op.records.forEach(r => {
+    // Filtra pela data de admissão e data global de 16/03/2026
+    if (r.data < effectiveStart) return;
+    
     credito += r.credito || 0;
     deficit += r.deficit || 0;
   });
-  const dtIni = dataIni || '2026-03-16';
+  
+  const dtIni = dataIni || '2000-01-01';
   const d = new Date();
   d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
   const todayStr = d.toISOString().split('T')[0];
@@ -155,6 +164,7 @@ function getOperatorSummary(op, mes, dataIni, dataFim) {
   // Add falta as BH deficit
   const faltasBH = FALTAS.filter(f => {
     if (normalizeName(f.operador) !== op.nome || f.tipo !== 'banco_horas') return false;
+    if (f.data < effectiveStart) return false;
     if (mes && !f.data.startsWith(mes)) return false;
     if (f.data < dtIni) return false;
     if (f.data > dtFim) return false;
@@ -164,10 +174,10 @@ function getOperatorSummary(op, mes, dataIni, dataFim) {
   
   // Feriados: sempre incluir deficit de 01:12:00 por cada feriado cadastrado no sistema
   const feriadosFilt = FERIADOS.filter(f => {
+    if (f.data < effectiveStart) return false;
     if (mes && !f.data.startsWith(mes)) return false;
     if (f.data < dtIni) return false;
     if (f.data > dtFim) return false;
-    if (op.admissao && op.admissao >= f.data) return false;
     return true;
   });
   const bhFeriados = feriadosFilt.length * COMPENSACAO_FERIADO;
