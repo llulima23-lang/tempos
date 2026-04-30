@@ -181,9 +181,19 @@ function getOperatorSummary(op, mes, dataIni, dataFim) {
     return true;
   });
   const bhFeriados = feriadosFilt.length * COMPENSACAO_FERIADO;
+
+  const faltasAtestado = FALTAS.filter(f => {
+    if (normalizeName(f.operador) !== op.nome || f.tipo !== 'atestado') return false;
+    if (f.data < effectiveStart) return false;
+    if (mes && !f.data.startsWith(mes)) return false;
+    if (f.data < dtIni) return false;
+    if (f.data > dtFim) return false;
+    return true;
+  });
+  const atestadoDias = faltasAtestado.length;
   
   const saldo = credito - deficit - bhFeriados;
-  return { credito, deficit, bhFeriados, saldo };
+  return { credito, deficit, bhFeriados, saldo, atestadoDias };
 }
 
 function getGroups() {
@@ -443,6 +453,7 @@ function renderOperadoresView() {
           </div>
           <div class="op-card-stats">
             <div class="op-card-stat"><label>Pausas</label><span style="color: ${parseFloat(pctPausa) <= 15.5 ? 'var(--green)' : 'var(--red)'}">${pctPausa}</span></div>
+            <div class="op-card-stat" style="text-align:center"><label>Atestados</label><span>${s.atestadoDias} d</span></div>
             <div class="op-card-stat" style="text-align:right"><label>Saldo BH</label><span style="color:${isPos ? 'var(--green)' : 'var(--red)'}">${secToHMS(s.saldo)}</span></div>
           </div>
           <div style="font-size: 0.65rem; color: var(--text-muted); text-align: right; margin-top: 10px;">Atualizado: ${dataAtt}</div>
@@ -463,6 +474,7 @@ function renderOperadoresView() {
           <td>${op.matricula || '-'}</td>
           <td class="val-credito">${secToHMS(s.credito)}</td>
           <td class="val-deficit">${secToHMS(s.deficit)}</td>
+          <td>${s.atestadoDias}</td>
           <td style="color:${isPos ? 'var(--green)' : 'var(--red)'}; font-weight:700">${secToHMS(s.saldo)}</td>
         </tr>
       `;
