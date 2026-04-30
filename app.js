@@ -31,6 +31,7 @@ function getDayOfWeek(d) {
 
 function normalizeName(n) {
   if (!n) return '';
+  n = n.normalize('NFD').replace(/[\u0300-\u036f]/g, "");
   return n.trim().toLowerCase().split(/\s+/).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
 }
 
