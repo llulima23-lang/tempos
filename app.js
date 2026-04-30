@@ -772,6 +772,13 @@ function renderFaltas() {
   if (filterTipo) filtered = filtered.filter(f => f.tipo === filterTipo);
   filtered.sort((a,b) => a.data.localeCompare(b.data));
 
+  const elTotal = document.getElementById('kpi-faltas-total');
+  const elBH = document.getElementById('kpi-faltas-bh');
+  const elAtestado = document.getElementById('kpi-faltas-atestado');
+  if (elTotal) elTotal.textContent = filtered.length;
+  if (elBH) elBH.textContent = filtered.filter(f => f.tipo === 'banco_horas').length;
+  if (elAtestado) elAtestado.textContent = filtered.filter(f => f.tipo === 'atestado').length;
+
   const tbody = document.getElementById('faltas-body');
   tbody.innerHTML = '';
   filtered.forEach((f, i) => {
@@ -791,19 +798,41 @@ function renderFaltas() {
 
 function addFalta() {
   const operador = document.getElementById('falta-operador').value;
-  const data = document.getElementById('falta-data').value;
+  const dataIni = document.getElementById('falta-data-ini').value;
+  const dataFim = document.getElementById('falta-data-fim').value;
   const tipo = document.getElementById('falta-tipo').value;
   const carga = parseInt(document.getElementById('falta-carga').value);
   const obs = document.getElementById('falta-obs').value.trim();
-  if (!operador || !data) { toast('Preencha operador e data!', 'error'); return; }
-  FALTAS.push({ operador, data, tipo, carga, obs });
+  
+  if (!operador || !dataIni) { toast('Preencha operador e data de início!', 'error'); return; }
+  
+  const start = new Date(dataIni + 'T12:00:00');
+  const end = dataFim ? new Date(dataFim + 'T12:00:00') : start;
+  
+  if (end < start) { toast('A data fim não pode ser menor que a data de início!', 'error'); return; }
+
+  let currentDate = new Date(start);
+  let count = 0;
+  
+  while (currentDate <= end) {
+    const y = currentDate.getFullYear();
+    const m = String(currentDate.getMonth() + 1).padStart(2, '0');
+    const d = String(currentDate.getDate()).padStart(2, '0');
+    const dateStr = `${y}-${m}-${d}`;
+    
+    FALTAS.push({ operador, data: dateStr, tipo, carga, obs });
+    count++;
+    currentDate.setDate(currentDate.getDate() + 1);
+  }
+  
   localStorage.setItem('bh_faltas', JSON.stringify(FALTAS));
   renderFaltas();
   renderDashboard();
-  document.getElementById('falta-data').value = '';
+  document.getElementById('falta-data-ini').value = '';
+  document.getElementById('falta-data-fim').value = '';
   document.getElementById('falta-obs').value = '';
   const tipoLabel = tipo === 'banco_horas' ? 'Banco de Horas' : 'Atestado';
-  toast(`Falta registrada como ${tipoLabel}!`);
+  toast(`${count} dia(s) registrado(s) como ${tipoLabel}!`);
 }
 
 function removeFalta(i) {

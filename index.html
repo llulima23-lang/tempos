@@ -465,6 +465,32 @@
           <p>Registre aqui as faltas dos operadores. Selecione se a falta será <strong>Banco de Horas (a compensar)</strong> ou <strong>Atestado (justificada)</strong>. Faltas como "Banco de Horas" serão adicionadas ao déficit do operador.</p>
         </div>
       </div>
+      
+      <!-- KPI Cards Faltas -->
+      <div class="kpi-grid kpi-grid-3">
+        <div class="kpi-card kpi-deficit">
+          <div class="kpi-icon"><span class="material-icons-round">event_busy</span></div>
+          <div class="kpi-info">
+            <span class="kpi-label">Total de Dias Ausentes</span>
+            <span class="kpi-value" id="kpi-faltas-total">0</span>
+          </div>
+        </div>
+        <div class="kpi-card kpi-saldo" style="border-left-color: var(--accent);">
+          <div class="kpi-icon"><span class="material-icons-round">schedule</span></div>
+          <div class="kpi-info">
+            <span class="kpi-label">Banco de Horas</span>
+            <span class="kpi-value" id="kpi-faltas-bh">0</span>
+          </div>
+        </div>
+        <div class="kpi-card kpi-credito">
+          <div class="kpi-icon"><span class="material-icons-round">medical_information</span></div>
+          <div class="kpi-info">
+            <span class="kpi-label">Atestados</span>
+            <span class="kpi-value" id="kpi-faltas-atestado">0</span>
+          </div>
+        </div>
+      </div>
+
       <div class="feriado-form-card">
         <h3><span class="material-icons-round">person_add_disabled</span> Registrar Falta</h3>
         <div class="form-row">
@@ -475,8 +501,12 @@
             </select>
           </div>
           <div class="form-group">
-            <label>Data da Falta</label>
-            <input type="date" id="falta-data" class="filter-input">
+            <label>Data Início</label>
+            <input type="date" id="falta-data-ini" class="filter-input">
+          </div>
+          <div class="form-group">
+            <label>Data Fim (Opcional)</label>
+            <input type="date" id="falta-data-fim" class="filter-input">
           </div>
           <div class="form-group">
             <label>Tipo de Falta</label>
